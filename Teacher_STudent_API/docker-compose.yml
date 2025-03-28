@@ -1,0 +1,46 @@
+# version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3002:3000"
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_USER=root
+      - DB_PASSWORD=password
+      - DB_NAME=teacher_student_db
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm start
+
+  db:
+    image: mysql:8
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: teacher_student_db
+    ports:
+      - "4001:4000"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  test:
+    build: .
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_USER=root
+      - DB_PASSWORD=password
+      - DB_NAME=teacher_student_db
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm test
+
+volumes:
+  mysql_data:
