@@ -3,7 +3,7 @@ require("dotenv").config();
 
 // Creating a MySQL connection pool using the `mysql2` library
 const pool = mysql.createPool({
-  host: process.env.DB_HOST,
+  host: process.env.DB_HOST || 'localhost', //If DB_HOST which is Dockerized MYSQL database is not present use localhost
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,

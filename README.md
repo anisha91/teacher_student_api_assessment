@@ -63,3 +63,21 @@ To execute test cases:
 ```sh
 npm test
 ```
+
+# Running the Docker Setup
+## Build and run the containers:
+```
+docker-compose up --build -d
+```
+Application will be accessible at http://localhost:3001
+
+## To Test 
+```
+docker-compose run test
+```
+
+## To stop the containers:
+```
+docker-compose down
+```
+### Make sure Docker is installed and running on your machine to use the Docker setup.
