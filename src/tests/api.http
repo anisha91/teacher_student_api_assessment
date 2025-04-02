@@ -1,0 +1,62 @@
+### Register students
+POST http://localhost:3001/api/register
+Content-Type: application/json
+
+{
+  "teacher": "teacherken@gmail.com",
+  "students": [
+    "studentmike@gmail.com",
+    "studentlisa@gmail.com"
+  ]
+}
+
+### Get common students (Single teacher)
+GET http://localhost:3001/api/commonstudents?teacher=teacherken@gmail.com
+Content-Type: application/json
+
+### Get common students (Multiple teachers)
+GET http://localhost:3001/api/commonstudents?teacher=teacherken@gmail.com&teacher=teacherjoe@gmail.com
+Content-Type: application/json
+
+### Suspend a student
+POST http://localhost:3001/api/suspend
+Content-Type: application/json
+
+{
+  "student": "studentmike@gmail.com"
+}
+
+### Send notification (No mentioned students)
+POST http://localhost:3001/api/retrievefornotifications
+Content-Type: application/json
+
+{
+  "teacher": "teacherken@gmail.com",
+  "notification": "Hello students!"
+}
+
+### Send notification (With mentioned students)
+POST http://localhost:3001/api/retrievefornotifications
+Content-Type: application/json
+
+{
+  "teacher": "teacherken@gmail.com",
+  "notification": "Hello students! @studentagnes@gmail.com"
+}
+
+### Send notification (Missing fields)
+POST http://localhost:3001/api/retrievefornotifications
+Content-Type: application/json
+
+{
+  "teacher": "teacherken@gmail.com"
+}
+
+### Send notification (Non-existent teacher)
+POST http://localhost:3001/api/retrievefornotifications
+Content-Type: application/json
+
+{
+  "teacher": "nonexistent@gmail.com",
+  "notification": "Hello students!"
+}

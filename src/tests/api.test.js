@@ -13,6 +13,14 @@ describe("Teacher-Student API", () => {
         expect(res.status).toBe(204);
     },10000);
 
+    test("Should return 404 if any teacher is not found", async () => {
+        const response = await request(app)
+          .get("/api/commonstudents?teacher=teacherken@gmail.com&teacher=teacher99@gmail.com");
+      
+        expect(response.status).toBe(404);
+        expect(response.body).toHaveProperty("message", "Teacher(s) not found: teacher99@gmail.com");
+      });
+      
     test("Get common students", async () => {
         const res = await request(app).get(
             "/api/commonstudents?teacher=teacherken@gmail.com"

@@ -6,6 +6,8 @@ const {
   findCommonStudents,
   suspendStudentByEmail,
 } = require("../services/teacherService");
+// Handles notifications and retrieves recipients
+const { sendNotification } = require("../services/notificationService");
 
 // Handles the registration of students under a teacher
 const registerTeachersAndStudents = async (req, res) => {
@@ -37,6 +39,20 @@ const getCommonStudents = async (req, res) => {
     }
 
     const teachers = Array.isArray(teacher) ? teacher : [teacher];
+    // Validate if all teachers exist in the database
+    const [existingTeachers] = await pool.execute(
+      `SELECT email FROM teachers WHERE email IN (${teachers.map(() => "?").join(", ")})`,
+      teachers
+    );
+
+    const existingTeacherEmails = existingTeachers.map((t) => t.email);
+    const missingTeachers = teachers.filter((email) => !existingTeacherEmails.includes(email));
+
+    if (missingTeachers.length > 0) {
+      return res.status(404).json({ message: `Teacher(s) not found: ${missingTeachers.join(", ")}` });
+    }
+
+     // Proceed only if all teachers exist
     const students = await findCommonStudents(teachers);
 
     return res.status(200).json({ students });
@@ -66,53 +82,19 @@ const suspendStudent = async (req, res) => {
   }
 };
 
-// Handles notifications and retrieves recipients
 const notification = async (req, res) => {
-  try {
-    const { teacher, notification } = req.body;
+    try {
+        const { teacher, notification } = req.body;
+        if (!teacher || !notification) {
+            return res.status(400).json({ message: "Missing required fields" });
+        }
 
-    if (!teacher || !notification) {
-      console.log("DEBUG: Missing required fields!"); // ✅ Debugging log
-      return res.status(400).json({ message: "Missing required fields" }); // ✅ Exact expected message
+        const result = await sendNotification(teacher, notification);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Error in notification:", error);
+        return handleError(res, error);
     }
-
-    // Extract @mentioned students
-    const mentionedStudents = (notification.match(/@([\w.-]+@[\w.-]+)/g) || []).map((s) => s.replace("@", ""));
-
-    // Find teacher ID
-    const [teacherRow] = await pool.execute("SELECT id FROM teachers WHERE email = ?", [teacher]);
-    if (teacherRow.length === 0) {
-      return res.status(404).json({ message: "Teacher not found." });
-    }
-
-    const teacherId = teacherRow[0].id;
-
-    // Get registered students
-    let query = `
-      SELECT DISTINCT s.email 
-      FROM students s
-      LEFT JOIN teacher_students ts ON s.id = ts.student_id
-      LEFT JOIN teachers t ON ts.teacher_id = t.id
-      WHERE t.email = ? AND s.suspended = FALSE
-    `;
-    let queryParams = [teacher];
-
-    if (mentionedStudents.length > 0) {
-      const placeholders = mentionedStudents.map(() => "?").join(", ");
-      query += ` OR s.email IN (${placeholders})`;
-      queryParams.push(...mentionedStudents);
-    }
-
-    const [recipients] = await pool.execute(query, queryParams);
-
-    // Store the notification in the database
-    await pool.execute("INSERT INTO notifications (teacher_id, message) VALUES (?, ?)", [teacherId, notification]);
-
-    return res.status(200).json({ recipients: recipients.map((s) => s.email) });
-  } catch (error) {
-    console.error("Error in notification:", error);
-    return res.status(500).json({ message: "Internal Server Error" });
-  }
 };
 
 
