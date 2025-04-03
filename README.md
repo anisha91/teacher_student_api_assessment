@@ -21,11 +21,12 @@ This API provides endpoints for managing teacher-student relationships, includin
    ```
 3. Configure environment variables in `.env`:
    ```sh
+   PORT=3301
    DB_HOST=localhost
    DB_USER=root
-   DB_PASSWORD=yourpassword
+   DB_PASSWORD=password
    DB_NAME=teacher_student_db
-   JWT_SECRET=your_jwt_secret
+   DB_PORT=3306
    ```
 4. Start the server:
    ```sh
@@ -36,6 +37,7 @@ This API provides endpoints for managing teacher-student relationships, includin
 # Configure the Environment for Docker
 ### Rename .env.example to .env and update the database credentials if needed:
 ```sh
+  PORT=3301
   DB_HOST=db
   DB_PORT=3306
   DB_USER=root
@@ -60,6 +62,12 @@ docker ps -a
 docker exec -it node_project-db-1 mysql -u root -p
 ```
 #### Enter the password from .env.
+
+### Create database and tables from database_schema.sql
+check if server is running else use
+```sh
+npm start
+```
 
 # Running API Requests
 #### Use VS Code REST Client to test API requests in api.http:
