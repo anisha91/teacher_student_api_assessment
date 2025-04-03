@@ -14,30 +14,23 @@ CREATE TABLE students (
 );
 
 CREATE TABLE teacher_students (
-    teacher_id INT,
-    student_id INT,
-    PRIMARY KEY (teacher_id, student_id),
-    FOREIGN KEY (teacher_id) REFERENCES teachers(id),
-    FOREIGN KEY (student_id) REFERENCES students(id)
-);
-
-CREATE TABLE registrations (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    teacher_email VARCHAR(255),
-    student_email VARCHAR(255),
-    FOREIGN KEY (teacher_email) REFERENCES teachers(email),
-    FOREIGN KEY (student_email) REFERENCES students(email),
-    UNIQUE (teacher_email, student_email)
+    teacher_id INT NOT NULL,
+    student_id INT NOT NULL,
+    FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE CASCADE,
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_teacher_student (teacher_id, student_id) -- Unique constraint
 );
 
 CREATE TABLE notifications (
     id INT AUTO_INCREMENT PRIMARY KEY,
     teacher_id INT NOT NULL,
+    student_id INT NOT NULL,
     message TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE CASCADE
+    FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE CASCADE,
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
 );
-
 
 INSERT INTO teachers (email) VALUES
 ('teacherken@gmail.com'),
@@ -75,35 +68,17 @@ INSERT INTO teacher_students (teacher_id, student_id) VALUES
 (3, 7), -- studenthon
 (3, 8); -- studentjon
 
-INSERT INTO registrations (teacher_email, student_email) VALUES
--- Teacher Ken's students
-('teacherken@gmail.com', 'commonstudent1@gmail.com'),
-('teacherken@gmail.com', 'commonstudent2@gmail.com'),
-('teacherken@gmail.com', 'studentbob@gmail.com'),
-('teacherken@gmail.com', 'studenthon@gmail.com'),
-('teacherken@gmail.com', 'studentjon@gmail.com'),
 
--- Teacher Joe's students
-('teacherjoe@gmail.com', 'commonstudent1@gmail.com'),
-('teacherjoe@gmail.com', 'commonstudent2@gmail.com'),
-('teacherjoe@gmail.com', 'studentmary@gmail.com'), -- Suspended student
-('teacherjoe@gmail.com', 'studentagnes@gmail.com'),
+INSERT INTO notifications (teacher_id, student_id, message) VALUES
+(1, 1, 'Hello students!'),
+(1, 2, 'Hello students!'),
+(1, 3, 'Hello students!'),
+(2, 5, 'Meeting at 3 PM'),
+(3, 6, 'Exam on Friday');
 
--- Teacher Emma's students
-('teacheremma@gmail.com', 'studentmiche@gmail.com'),
-('teacheremma@gmail.com', 'studenthon@gmail.com'),
-('teacheremma@gmail.com', 'studentjon@gmail.com');
-
-
-INSERT INTO notifications (teacher_id, message) VALUES
-(1, 'Hello students! @studentjon@gmail.com @studenthon@gmail.com'),
-(1, 'Reminder: Exam is on Monday.'),
-(2, 'Team meeting at 5 PM today.'),
-(3, 'Please submit your projects by Friday.');
 
 SELECT * FROM teachers;
 SELECT * FROM students;
 SELECT * FROM teacher_students;
-SELECT * FROM registrations;
 SELECT * FROM notifications;
 

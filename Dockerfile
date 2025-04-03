@@ -7,6 +7,9 @@ WORKDIR /app
 # Copy package.json and package-lock.json (if available)
 COPY package*.json ./
 
+# Install MySQL client
+RUN apt-get update && apt-get install -y default-mysql-client
+
 # Install dependencies
 RUN npm install
 
@@ -14,7 +17,10 @@ RUN npm install
 COPY . .
 
 # Expose port for the API
-EXPOSE 3001
+EXPOSE 3000
 
 # Run tests when the container is started
-CMD ["npm", "test"]
+ CMD ["npm", "start"]
+
+# Start the application
+#CMD ["node", "server.js"]

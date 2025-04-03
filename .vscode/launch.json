@@ -1,0 +1,26 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Debug API",
+        "type": "node",
+        "request": "launch",
+        "program": "${workspaceFolder}/src/server.js",
+        "env": {
+          "NODE_ENV": "development"
+        },
+        "outFiles": ["${workspaceFolder}/**/*.js"],
+        "restart": true,
+        "console": "integratedTerminal"
+      },
+      {
+        "type": "node",
+        "request": "attach",
+        "name": "Attach to Docker",
+        "address": "localhost",
+        "port": 9229,
+        "restart": true
+      }
+    ]
+  }
+  

@@ -83,19 +83,25 @@ const suspendStudent = async (req, res) => {
 };
 
 const notification = async (req, res) => {
-    try {
-        const { teacher, notification } = req.body;
-        if (!teacher || !notification) {
-            return res.status(400).json({ message: "Missing required fields" });
-        }
+  try {
+      const { teacher, notification } = req.body;
+      if (!teacher || !notification) {
+          return res.status(400).json({ message: "Missing required fields" });
+      }
 
-        const result = await sendNotification(teacher, notification);
-        return res.status(200).json(result);
-    } catch (error) {
-        console.error("Error in notification:", error);
-        return handleError(res, error);
-    }
+      const result = await sendNotification(teacher, notification);
+
+      if (result.error) {
+          return res.status(400).json({ message: result.error });
+      }
+
+      return res.status(200).json(result);
+  } catch (error) {
+      console.error("Error in notification:", error);
+      return res.status(500).json({ message: "error" + error });
+  }
 };
+
 
 
 // Centralized Error Handling Middleware
