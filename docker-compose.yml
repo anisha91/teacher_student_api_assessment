@@ -2,36 +2,16 @@
 
 services:
   db:
-    image: mysql:8
+    image: mysql:latest
+    container_name: mysql_container
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: teacher_student_db
     ports:
-      - "4306:3306"
+      - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-  app:
-    build: .
-    ports:
-      - "3002:3001"
-    depends_on:
-      - db
-    env_file: .env
-    volumes:
-      - .:/app
-      - /app/node_modules
-    command: npm start
-
-  test:
-    build: .
-    depends_on:
-      - db
-    env_file: .env
-    volumes:
-      - .:/app
-      - /app/node_modules
-    command: npm test
 
 volumes:
   mysql_data:

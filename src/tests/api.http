@@ -1,5 +1,5 @@
 ### Register students
-POST http://localhost:3002/api/register
+POST http://localhost:3001/api/register
 Content-Type: application/json
 
 {
@@ -14,23 +14,40 @@ Content-Type: application/json
 }
 
 ### Get common students (Single teacher)
-GET http://localhost:3002/api/commonstudents?teacher=teacherken@gmail.com
+GET http://localhost:3001/api/commonstudents?teacher=teacherken@gmail.com
 Content-Type: application/json
 
 ### Get common students (Multiple teachers)
-GET http://localhost:3002/api/commonstudents?teacher=teacherken@gmail.com&teacher=teacherjoe@gmail.com
+GET http://localhost:3001/api/commonstudents?teacher=teacherken@gmail.com&teacher=teacherjoe@gmail.com
 Content-Type: application/json
 
 ### Suspend a student
-POST http://localhost:3002/api/suspend
+POST http://localhost:3001/api/suspend
 Content-Type: application/json
 
 {
   "student": "studentmike@gmail.com"
 }
+### Send notification (With Teacher having No students)
+POST http://localhost:3001/api/retrievefornotifications
+Content-Type: application/json
 
-### Send notification (With mentioned students)
-POST http://localhost:3002/api/retrievefornotifications
+{
+  "teacher": "teacheremma@gmail.com",
+  "notification": "Hello students!"
+}
+
+### Send notification (With Teacher but No students passed)
+POST http://localhost:3001/api/retrievefornotifications
+Content-Type: application/json
+
+{
+  "teacher": "teacheremma@gmail.com",
+  "notification": "Hello students!"
+}
+
+### Send notification (With mentioned students not exist)
+POST http://localhost:3001/api/retrievefornotifications
 Content-Type: application/json
 
 {
@@ -39,7 +56,7 @@ Content-Type: application/json
 }
 
 ### Send notification (Missing fields)
-POST http://localhost:3002/api/retrievefornotifications
+POST http://localhost:3001/api/retrievefornotifications
 Content-Type: application/json
 
 {
@@ -47,7 +64,7 @@ Content-Type: application/json
 }
 
 ### Send notification (Non-existent teacher)
-POST http://localhost:3002/api/retrievefornotifications
+POST http://localhost:3001/api/retrievefornotifications
 Content-Type: application/json
 
 {

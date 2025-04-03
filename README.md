@@ -21,60 +21,48 @@ This API provides endpoints for managing teacher-student relationships, includin
    ```
 3. Configure environment variables in `.env`:
    ```sh
-   PORT=3301
-   DB_HOST=localhost
-   DB_USER=root
-   DB_PASSWORD=password
-   DB_NAME=teacher_student_db
-   DB_PORT=3306
+  PORT=3001
+  DB_HOST=localhost
+  DB_USER=root
+  DB_PASS=password
+  DB_NAME=teacher_student_db
+  DB_PORT=3306
    ```
 4. Start the server:
    ```sh
    npm start
    ```
 # If using MySQL Make sure MySQL is running on your machine and using the above mentioned config in .env file.
-# Ensure you have Docker and Docker Compose installed on your system.
-# Configure the Environment for Docker
-### Rename .env.example to .env and update the database credentials if needed:
-```sh
-  PORT=3301
-  DB_HOST=db
-  DB_PORT=3306
+
+# If you are using Docker Ensure you have Docker and Docker Compose installed on your system.
+ 1. Configure the Environment for Docker
+ 2. Rename .env.example to .env and update the database credentials if needed:
+  ```sh
+  PORT=3001
+  DB_HOST=localhost
   DB_USER=root
-  DB_PASSWORD=password
+  DB_PASS=password
   DB_NAME=teacher_student_db
-```
-#  Build and Start the Containers
-```sh
-docker-compose up --build -d
-```
+  DB_PORT=3306
+  ```
+ 3. Build and Start the Containers
+  ```sh
+  docker-compose up --build -d
+  ```
 ### This will:
 Build the Node.js API container.
 Set up the MySQL database container.
 
-# To check running containers:
+ 4.  To check running containers:
 ```sh
 docker ps -a
 ```
-# Verify Database Connection
-### Access the database inside the container:
-```sh
-docker exec -it node_project-db-1 mysql -u root -p
-```
-#### Enter the password from .env.
-
-### Create database and tables from database_schema.sql
-check if server is running else use
-```sh
-npm start
-```
-
-# Running API Requests
-#### Use VS Code REST Client to test API requests in api.http:
-
-#### Open api.http.
-
-#### Run the POST request to register teachers and students.
+ 5. To Verify Database Connection
+    5.1 Access the database inside the container:
+    ```sh
+    docker exec -it node_project-db-1 mysql -u root -p
+    ```
+    5.2 Enter the password from .env.
 
 # Stopping and Removing Containers
 ### To stop running containers:
@@ -89,6 +77,32 @@ docker-compose down -v
 ```sh
 docker-compose run test
 ```
+
+# Seeding and Migration
+For the convenience we have provided the schema in database_schema.sql please run the file either in MySQL Client or Docker Container database with MySQL prompt.
+## database schema file
+Click here [database_schema.sql](/database_schema.sql)
+
+# Running the Application
+check if server is running else use
+```sh
+npm start
+```
+## Running Tests
+To run unit tests:
+```sh
+npm test
+```
+
+# Running API Requests
+### Use VS Code REST Client to test API requests in api.http:
+
+#### Steps to Install and Use Rest Client
+1. Install the **Rest Client** extension from the VSCode Marketplace.
+2. Use a file named `api.http` inside the `src/tests` folder.
+3. Click the **Send Request** option above each API request in VSCode to execute it.
+
+Click here for API testing [api.http](/src/tests/api.http)
 
 ## API Endpoints
 ### Register Students
@@ -152,20 +166,4 @@ docker-compose run test
     "studentmiche@gmail.com"
   ]
 }
-```
-
-## API Testing with Rest Client in VSCode
-To test the API, you can use the [REST Client extension](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) in VSCode.
-
-### Steps to Install and Use Rest Client
-1. Install the **Rest Client** extension from the VSCode Marketplace.
-2. Create a new file named `api.http` inside the `src/tests` folder.
-3. Add API requests in the following format:
-
-4. Click the **Send Request** option above each API request in VSCode to execute it.
-
-## Running Tests
-To run unit tests:
-```sh
-npm test
 ```
