@@ -37,13 +37,13 @@ Content-Type: application/json
   "notification": "Hello students!"
 }
 
-### Send notification (With Teacher but No students passed)
+### Send notification (With students passed)
 POST http://localhost:3001/api/retrievefornotifications
 Content-Type: application/json
 
 {
   "teacher": "teacheremma@gmail.com",
-  "notification": "Hello students! @studentbob@gmail.com @studenthon@gmail.com"
+  "notification": "Hello students! @commonstudent1@gmail.com @studenthon@gmail.com"
 }
 
 ### Send notification (With mentioned students not exist)
@@ -52,7 +52,7 @@ Content-Type: application/json
 
 {
   "teacher": "teacherken@gmail.com",
-  "notification": "Hello students! @studentjon@gmail.com @studenthon@gmail.com"
+  "notification": "Hello students! @studentjon@gmail.com @studenthon@gmail.com @studentmary@gmail.com"
 }
 
 ### Send notification with non-existent @mentioned student
