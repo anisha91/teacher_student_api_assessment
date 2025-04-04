@@ -52,7 +52,7 @@ Content-Type: application/json
 
 {
   "teacher": "teacherken@gmail.com",
-  "notification": "Hello students! @studentjai@gmail.com @studenthon@gmail.com"
+  "notification": "Hello students! @studentjon@gmail.com @studenthon@gmail.com"
 }
 
 ### Send notification with non-existent @mentioned student

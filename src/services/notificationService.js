@@ -1,79 +1,114 @@
 const pool = require("../config/database"); // Ensure correct path to database connection
 
 const sendNotification = async (teacherEmail, message) => {
-    try {
-        // Find teacher ID
-        const [teacherRow] = await pool.execute("SELECT id FROM teachers WHERE email = ?", [teacherEmail]);
-        if (teacherRow.length === 0) {
-            return { error: "Teacher not found" };
-        }
-        const teacherId = teacherRow[0].id;
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
 
-        // Extract @mentioned students
-        const mentionedStudents = (message.match(/@([\w.-]+@[\w.-]+)/g) || []).map((s) => s.replace("@", ""));
-
-        // Check if mentioned students exist in the `students` table
-        if (mentionedStudents.length > 0) {
-            const placeholders = mentionedStudents.map(() => "?").join(", ");
-            const [existingStudents] = await pool.execute(
-                `SELECT email FROM students WHERE email IN (${placeholders})`, mentionedStudents
-            );
-
-            const existingEmails = existingStudents.map(s => s.email);
-            const nonExistingEmails = mentionedStudents.filter(email => !existingEmails.includes(email));
-
-            if (nonExistingEmails.length > 0) {
-                return { error: `The following students do not exist: ${nonExistingEmails.join(", ")}` };
-            }
-        }
-
-        // Get students linked to the teacher (registered & not suspended) OR mentioned students
-        let query = `
-            SELECT DISTINCT s.id, s.email 
-            FROM students s
-            LEFT JOIN teacher_students ts ON s.id = ts.student_id
-            LEFT JOIN teachers t ON ts.teacher_id = t.id
-            WHERE (t.email = ? AND s.suspended = FALSE)
-        `; 
-
-        let queryParams = [teacherEmail];
-
-        if (mentionedStudents.length > 0) {
-            const placeholders = mentionedStudents.map(() => "?").join(", ");
-            query += ` OR (s.email IN (${placeholders}) AND s.suspended = FALSE)`;
-            queryParams.push(...mentionedStudents);
-        }
-
-        const [recipients] = await pool.execute(query, queryParams);
-
-        // Check if all mentioned students are actually linked to the teacher
-        const recipientEmails = recipients.map(s => s.email);
-        const unrelatedEmails = mentionedStudents.filter(email => !recipientEmails.includes(email));
-
-        if (unrelatedEmails.length > 0) {
-            return { error: `The following students are not registered under this teacher: ${unrelatedEmails.join(", ")}` };
-        }
-
-        // If no students are eligible
-        if (recipients.length === 0) { 
-            return { error: "No students linked to this teacher or mentioned in the message." };
-        }
-
-        // Store separate records for each student in notifications table
-        const notificationPromises = recipients.map(student =>
-            pool.execute(
-                "INSERT INTO notifications (teacher_id, student_id, message) VALUES (?, ?, ?)",
-                [teacherId, student.id, message]
-            )
-        );
-        await Promise.all(notificationPromises);
-
-        return { recipients: recipients.map(s => s.email) };
-
-    } catch (error) {
-        console.error("Error in sendNotification:", error);
-        throw error;
+    // 1. Validate teacher exists
+    const [teacher] = await connection.execute(
+      "SELECT id FROM teachers WHERE email = ?",
+      [teacherEmail.toLowerCase()]
+    );
+    if (teacher.length === 0) {
+      throw new Error("Teacher not found");
     }
+    const teacherId = teacher[0].id;
+
+    // 2. Validate required fields
+    if (!message) {
+      throw new Error("Missing required fields");
+    }
+
+    // 3. Extract mentioned students
+    const mentionedStudents = (message.match(/@([\w.-]+@[\w.-]+)/g) || [])
+      .map(s => s.replace("@", "").toLowerCase());
+
+    // 4. Get all student statuses
+    let studentStatus = [];
+    if (mentionedStudents.length > 0) {
+      const placeholders = mentionedStudents.map(() => '?').join(', ');
+      const [students] = await connection.execute(
+        `SELECT s.email, s.suspended, 
+         EXISTS(
+           SELECT 1 FROM teacher_students ts 
+           WHERE ts.student_id = s.id AND ts.teacher_id = ?
+         ) AS is_registered
+         FROM students s WHERE email IN (${placeholders})`,
+        [teacherId, ...mentionedStudents]
+      );
+      studentStatus = students;
+    }
+
+    // 5. Prepare detailed status messages
+    let statusMessages = [];
+    const recipients = [];
+    
+    studentStatus.forEach(student => {
+      if (student.suspended) {
+        statusMessages.push(`${student.email} is suspended`);
+      } else if (!student.is_registered) {
+        statusMessages.push(`${student.email} is not registered under ${teacherEmail}`);
+      } else {
+        recipients.push(student.email);
+      }
+    });
+
+    // 6. Check for non-existent students
+    const existingEmails = studentStatus.map(s => s.email);
+    const invalidStudents = mentionedStudents.filter(email => !existingEmails.includes(email));
+    if (invalidStudents.length > 0) {
+      statusMessages.push(`These students do not exist: ${invalidStudents.join(", ")}`);
+    }
+
+    // 7. Prepare response
+    if (recipients.length === 0 && statusMessages.length > 0) {
+      throw new Error(statusMessages.join(". "));
+    }
+
+    // 8. Get teacher's non-suspended students
+    const [teachersStudents] = await connection.execute(
+      `SELECT s.email FROM students s
+       JOIN teacher_students ts ON s.id = ts.student_id
+       WHERE ts.teacher_id = ? AND s.suspended = FALSE`,
+      [teacherId]
+    );
+
+    const allRecipients = [
+      ...recipients,
+      ...teachersStudents.map(s => s.email)
+    ].filter((v, i, a) => a.indexOf(v) === i); // Unique values
+
+    if (allRecipients.length === 0) {
+      throw new Error("No eligible recipients found");
+    }
+
+    // 9. Store notifications
+    await Promise.all(
+      allRecipients.map(email =>
+        connection.execute(
+          `INSERT INTO notifications (teacher_id, student_id, message)
+           SELECT ?, s.id, ? FROM students s WHERE s.email = ?`,
+          [teacherId, message, email]
+        )
+      )
+    );
+
+    await connection.commit();
+    
+    // Include status messages in successful response
+    return { 
+      recipients: allRecipients,
+      ...(statusMessages.length > 0 && { messages: statusMessages })
+    };
+
+  } catch (error) {
+    await connection.rollback();
+    console.error("Notification error:", error.message);
+    throw error;
+  } finally {
+    connection.release();
+  }
 };
 
 module.exports = {
