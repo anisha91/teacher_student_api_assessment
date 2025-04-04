@@ -5,7 +5,7 @@ const sendNotification = async (teacherEmail, message) => {
   try {
     await connection.beginTransaction();
 
-    // 1. Validate teacher exists
+    // Validate teacher exists
     const [teacher] = await connection.execute(
       "SELECT id FROM teachers WHERE email = ?",
       [teacherEmail.toLowerCase()]
@@ -15,16 +15,16 @@ const sendNotification = async (teacherEmail, message) => {
     }
     const teacherId = teacher[0].id;
 
-    // 2. Validate required fields
+    // Validate required fields
     if (!message) {
       throw new Error("Missing required fields");
     }
 
-    // 3. Extract mentioned students
+    // Extract mentioned students
     const mentionedStudents = (message.match(/@([\w.-]+@[\w.-]+)/g) || [])
       .map(s => s.replace("@", "").toLowerCase());
 
-    // 4. Get all student statuses
+    // Get all student statuses
     let studentStatus = [];
     if (mentionedStudents.length > 0) {
       const placeholders = mentionedStudents.map(() => '?').join(', ');
@@ -40,7 +40,7 @@ const sendNotification = async (teacherEmail, message) => {
       studentStatus = students;
     }
 
-    // 5. Prepare detailed status messages
+    //  Prepare detailed status messages
     let statusMessages = [];
     const recipients = [];
     
@@ -54,19 +54,19 @@ const sendNotification = async (teacherEmail, message) => {
       }
     });
 
-    // 6. Check for non-existent students
+    // Check for non-existent students
     const existingEmails = studentStatus.map(s => s.email);
     const invalidStudents = mentionedStudents.filter(email => !existingEmails.includes(email));
     if (invalidStudents.length > 0) {
       statusMessages.push(`These students do not exist: ${invalidStudents.join(", ")}`);
     }
 
-    // 7. Prepare response
+    //  Prepare response
     if (recipients.length === 0 && statusMessages.length > 0) {
       throw new Error(statusMessages.join(". "));
     }
 
-    // 8. Get teacher's non-suspended students
+    //  Get teacher's non-suspended students
     const [teachersStudents] = await connection.execute(
       `SELECT s.email FROM students s
        JOIN teacher_students ts ON s.id = ts.student_id
@@ -83,7 +83,7 @@ const sendNotification = async (teacherEmail, message) => {
       throw new Error("No eligible recipients found");
     }
 
-    // 9. Store notifications
+    //  Store notifications
     await Promise.all(
       allRecipients.map(email =>
         connection.execute(
