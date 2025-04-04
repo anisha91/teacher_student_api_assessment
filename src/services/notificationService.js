@@ -2,32 +2,17 @@ const pool = require("../config/database"); // Ensure correct path to database c
 
 const sendNotification = async (teacherEmail, message) => {
     try {
-        // 🔹 Find teacher ID
+        // Find teacher ID
         const [teacherRow] = await pool.execute("SELECT id FROM teachers WHERE email = ?", [teacherEmail]);
         if (teacherRow.length === 0) {
-            return { error: "Teacher not found" }; // Proper error message
+            return { error: "Teacher not found" };
         }
         const teacherId = teacherRow[0].id;
 
-        // 🔹 Extract @mentioned students
+        // Extract @mentioned students
         const mentionedStudents = (message.match(/@([\w.-]+@[\w.-]+)/g) || []).map((s) => s.replace("@", ""));
 
-        // 🔹 Check if the teacher has any registered students
-        const [teacherStudents] = await pool.execute(
-            `SELECT s.id, s.email 
-            FROM students s
-            INNER JOIN teacher_students ts ON s.id = ts.student_id
-            INNER JOIN teachers t ON ts.teacher_id = t.id
-            WHERE t.email = ? AND s.suspended = FALSE`,
-            [teacherId]
-        );
-
-        //  If the teacher has no students and no students are mentioned
-        if (teacherStudents.length === 0 && mentionedStudents.length === 0) {
-            return { error: "Teacher has no students and no mentioned students." };
-        }
-
-        //  Check if mentioned students exist in the `students` table
+        // Check if mentioned students exist in the `students` table
         if (mentionedStudents.length > 0) {
             const placeholders = mentionedStudents.map(() => "?").join(", ");
             const [existingStudents] = await pool.execute(
@@ -42,7 +27,7 @@ const sendNotification = async (teacherEmail, message) => {
             }
         }
 
-        //  Get students linked to the teacher (registered & not suspended)
+        // Get students linked to the teacher (registered & not suspended) OR mentioned students
         let query = `
             SELECT DISTINCT s.id, s.email 
             FROM students s
@@ -55,7 +40,7 @@ const sendNotification = async (teacherEmail, message) => {
 
         if (mentionedStudents.length > 0) {
             const placeholders = mentionedStudents.map(() => "?").join(", ");
-            query += ` OR s.email IN (${placeholders})`;
+            query += ` OR (s.email IN (${placeholders}) AND s.suspended = FALSE)`;
             queryParams.push(...mentionedStudents);
         }
 
@@ -69,7 +54,7 @@ const sendNotification = async (teacherEmail, message) => {
             return { error: `The following students are not registered under this teacher: ${unrelatedEmails.join(", ")}` };
         }
 
-        // If no students are eligible, return a meaningful response
+        // If no students are eligible
         if (recipients.length === 0) { 
             return { error: "No students linked to this teacher or mentioned in the message." };
         }
@@ -87,7 +72,7 @@ const sendNotification = async (teacherEmail, message) => {
 
     } catch (error) {
         console.error("Error in sendNotification:", error);
-        throw error; // Let the calling function handle errors
+        throw error;
     }
 };
 

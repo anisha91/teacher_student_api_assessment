@@ -43,7 +43,7 @@ Content-Type: application/json
 
 {
   "teacher": "teacheremma@gmail.com",
-  "notification": "Hello students!"
+  "notification": "Hello students! @studentbob@gmail.com @studenthon@gmail.com"
 }
 
 ### Send notification (With mentioned students not exist)
@@ -53,6 +53,15 @@ Content-Type: application/json
 {
   "teacher": "teacherken@gmail.com",
   "notification": "Hello students! @studentjai@gmail.com @studenthon@gmail.com"
+}
+
+### Send notification with non-existent @mentioned student
+POST http://localhost:3001/api/retrievefornotifications
+Content-Type: application/json
+
+{
+  "teacher": "teacherjoe@gmail.com",
+  "notification": "Hello @notExistentStudent@gmail.com"
 }
 
 ### Send notification (Missing fields)
