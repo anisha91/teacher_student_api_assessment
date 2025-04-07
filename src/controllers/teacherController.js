@@ -98,7 +98,7 @@ const notification = async (req, res) => {
       return res.status(200).json(result);
   } catch (error) {
       console.error("Error in notification:", error);
-      return res.status(500).json({ message: "error" + error });
+      return res.status(500).json({ message: "Error" + error.message });
   }
 };
 
